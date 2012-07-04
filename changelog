@@ -1,0 +1,113 @@
+------------------------------------------------
+bDetect | bullet detection framework - Changelog
+------------------------------------------------
+
+-------------
+Version: 0.66
+-------------
+
+* Internal code optimization (thanks Sickboy)
+
+-------------
+Version: 0.65
+-------------
+
+* Added "killed" event handler
+* Renamed function bdetect_fnc_eh_fired_add() to bdetect_fnc_eh_add()
+* Renamed variable "bdetect_skip_mags" to "bdetect_bullet_skip_mags"
+* Fixed 3 typos ( "_x" instead of "_unit" ) in bdetect_fnc_eh_add()
+* Removed initial 5 seconds wait time before framework initialization, since it's easy to code the wait outside of the framework
+* Introduced variable "bdetect_fps_adaptation": (Boolean, Default true). Defines whether bDetect should try to keep FPS over "bdetect_fps_min", through degrading quality of detection
+* Tweaks to code and example syntax
+
+-------------
+Version: 0.64
+-------------
+
+* Incorporated suggestions from tpw: http://forums.bistudio.com/showthread.php?136304-TPWC-AI-suppression-system&p=2182742&viewfull=1#post2182742
+* Minor optimization / fixes
+* Introduced variable "bdetect_callback_mode": (String, Default "spawn") Allowed values: "call" or "spawn". It controls synchronous vs.asynchronous bdetect_callback() execution.
+
+-------------
+Version: 0.63
+-------------
+
+* Reverted  to "time" from "diag_tickTime", for issues to be looked in
+
+-------------
+Version: 0.62
+-------------
+
+* Fixed bullet position handling
+
+-------------
+Version: 0.61
+-------------
+
+* Fixed problem with units eventually detecting own shots
+
+------------
+Version: 0.6
+------------
+
+* Incorporated v0.51 changes/fixes by tpw.
+* Function bdetect_fnc_callback() slightly changed. See bottom of this file for example.
+* Function bdetect_fnc_init() waits for 5 seconds to pass by after mission start, before activating the framework.
+* Introduced function bdetect_fnc_eh_add(): suitable to force -immediate- assignment of a fired EH to any unit. Syntax: [unit] call bdetect_fnc_eh_add();
+* Fixed function bdetect_fnc_benchmark(): internally using code spawning, not to block code execution after function call.
+* Tweaked internals so that "diag_tickTime" is used instead of "time" (Thanks Ollem).
+* Introduced function bdetect_fnc_eh_loop(): iteratively checks ( each "bdetect_eh_assign_cycle_wait" seconds ) for newly spawned units to assign them a 'Fired' event Handler.
+* Renamed "bdetect_bullet_min_distance" to "bdetect_bullet_max_proximity"
+* Introduced variable "bdetect_init_done": (Boolean). It evaulates true when framework is loaded. Usage: "waitUntil { bdetect_init_done};"
+* Introduced variable "bdetect_eh_assign_cycle_wait": (seconds, Default 10). Wait duration foreach cyclic execution of bdetect_fnc_eh_loop()
+* Introduced variable "bdetect_bullet_min_distance": (meters, Default 25). Bullets not having travelled this distance are ignored
+* Introduced variable "bdetect_bullet_initial_min_speed": (meters / second, Default 360). Bullets initially slower than this are ignored (good for subsonic bullets skipping). 
+* Introduced variable "bdetect_debug_chat": (Boolean, Default false) Show debug messages also in globalChat.
+* Changed Variable "bdetect_debug_min_level" to "bdetect_debug_levels". (Array). Default [0,1,2,3,4,5,6,7,8,9]. 0-9 are reserved levels.
+
+------------
+Version: 0.5
+------------
+
+* Framework is named "bdetect" and contained into a single file: bdetect.sqf 
+* Renamed variable "bdetect_debug" to "bdetect_debug_enable"
+* Introduced variables "bdetect_name" and "bdetect_version": name and version of the framework;
+* Introduced function bdetect_fnc_init() to handle the framework bootstrap.
+* Introduced variable "bdetect_callback" (string). It defines the name of a custom callback function to be called on a unit when it detects a close bullet (Default: "bdetect_fnc_callback").
+* Functions and variable names polishing. All vars named bdetect_<varname>. All functions named bdetect_fnc_<funcname>.
+* Added some missing private vars.
+
+------------
+Version: 0.4
+------------
+
+* Introduced variables "bdetect_enable" (boolean), "bdetect_debug_levels" (Number), "bdetect_bullet_skip_mags" (array).
+* Variable "bdetect_enable" act as a toggle to enable / disable framework.
+* Variable "bdetect_debug_levels" allows for selective display / logging of debug messages based on level.
+* Introduced function bdetect_fnc_benchmark() to display performance stats.
+* Added "bdetect_bullet_skip_mags", which is a blacklist of bullet types which should not trigger detection
+
+------------
+Version: 0.3
+------------
+
+* Introduced variables "bdetect_bullet_delay" (seconds) , "bdetect_bullet_max_height" (meters).
+* Variable "bdetect_bullet_delay" (seconds) changes dinamycally between "bdetect_bullet_min_delay" (lower bound) and 1 (upper bound), depending on actual FPS vs "bdetect_fps_min".
+* Variable "bdetect_bullet_max_height" (meters) is the maximum height for bullets, over ground. Bullets higher than this value (Default: 10) and with up vector > 0 are skipped from detection, since they are too high and diverge from ground.
+* Some Code optimization.
+
+------------
+Version: 0.2
+------------
+
+* Position of bullet as SetPosASL.
+* Introduced variables "bdetect_fps_min" (fps), "bdetect_bullet_max_distance" (meters), "bdetect_bullet_max_lifespan" (seconds).
+* Introduced function bdetect_fnc_diag_min_fps(): in case FPS go under "bdetect_fps_min" value (Default: 25) bdetect_bullet_delay is gradually raised. 
+* Function bdetect_fnc_bullet_remove() edited and renamed to bdetect_fnc_bullet_tag_remove(), since actual removal is done elsewhere.
+* Bullets are removed from bdetect_fired_bullets if distance is over "bdetect_bullet_max_distance" meters or lifespan is over "bdetect_bullet_max_lifespan" seconds.
+
+------------
+Version: 0.1
+------------
+
+* First draft

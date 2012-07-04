@@ -1,0 +1,112 @@
+---------------------------------------------
+bDetect | bullet detection framework - Readme
+---------------------------------------------
+
+Version: 0.66
+Date: 04/07/2012
+Author: Fabrizio_T 
+Additional code: TPW 
+File Name: bdetect.sqf
+
+----------
+WHAT IS IT
+----------
+
+It's a small ( around 400 lines of code) framework in form of single .sqf file, named "bdetect.sqf". Basic scripting knowledge required.
+It was made in order to easily detect any flying bullets close to infantrymen, given some basic configuration (See: CONFIGURATION).
+Once a bullet is found being closer enough to some unit, a custom callback function is called: it's up to you defining the contents of this callback function.
+
+------------
+REQUIREMENTS
+------------
+
+* ArmA2 CO v1.61 BETA or higher (but v1.60 should probably work too)
+* CBA - Community Made Addons: https://dev-heaven.net/projects/cca/wiki/CBA
+
+-------------
+CONFIGURATION
+-------------
+
+bdetect_enable = true; 								// (Boolean, Default true) Toggle to Enable / Disable bdetect altogether.
+bdetect_debug_enable = false;  						// (Boolean, Default false) Toggle to Enable / Disable debug messages.
+bdetect_debug_chat = false;  						// (Boolean, Default false) Show debug messages also in globalChat.
+bdetect_debug_levels = [0,1,2,3,4,5,6,7,8,9];  		// (Array, Default [0,1,2,3,4,5,6,7,8,9]) Filter debug messages by included levels. 
+bdetect_callback = "bdetect_fnc_callback"; 			// (String, Default "bdetect_fnc_callback") Name for your own callback function
+bdetect_callback_mode = "spawn"; 					// (String, Default "spawn") Allowed values: "call" or "spawn"
+bdetect_fps_adaptation = true; 						// (Boolean, Default true) Whether bDetect should try to keep over "bdetect_fps_min" FPS while degrading quality of detection
+bdetect_fps_min = 20; 								// (Number, Default 20) The minimum FPS you wish to keep
+bdetect_fps_calc_each_x_frames = 16; 				// (Number, Default 16) FPS check is done each "bdetect_fps_min" frames. 1 means each frame.
+bdetect_eh_assign_cycle_wait = 10;  				// (Seconds, Default 10). Wait duration foreach cyclic execution of bdetect_fnc_eh_loop()
+bdetect_bullet_min_delay = 0.1; 					// (Seconds, Default 0.1) Minimum delay between 2 consecutive shots fired by a single unit for the last bullet to be tracked. BEWARE: Very low values may lag.
+bdetect_bullet_max_delay = 1.5; 					// (Seconds, Default 2)
+bdetect_bullet_initial_min_speed = 360; 			// (Meters/Second, Default 360) Bullets slower than this are ignored.
+bdetect_bullet_max_proximity = 10; 					// (Meters, Default 10) Maximum proximity to unit for triggering detection
+bdetect_bullet_min_distance = 25; 					// (Meters, Default 25) Bullets having travelled less than this distance are ignored
+bdetect_bullet_max_distance = 400; 					// (Meters, Default 400) Bullets havin travelled more than distance are ignored
+bdetect_bullet_max_lifespan = 0.5; 					// (Seconds, Default 0.5) Bullets living more than these seconds are ignored
+bdetect_bullet_max_height = 6; 						// (Meters, Default 6) Bullets going higher than this -and- diverging from ground are ignored
+bdetect_bullet_skip_mags = []; 						// (Array) Skip these bullet types altogether. Example: ["30rnd_9x19_MP5", "30rnd_9x19_MP5SD", "15Rnd_9x19_M9"]
+
+-------------
+HOW TO RUN IT
+-------------
+
+Running bDetect is straightforward if you have some basic knowledge of .sqf scripting. 
+There are 5 simple required steps, to be executed from within your own .sqf script file:
+
+* Load "bdetect.sqf"  from within your own script. Put "bdetect.sqf" into your mission folder and call it from there.
+* Set any bDetect variables you wish having values different than default.
+* Set bDetect "bdetect_callback" special variable: it holds the name of your own callback function, which will be executed on a per-unit basis when a bullet is detected close.
+* Declare your own callback function, named as "bdetect_callback", and define its payload. Make function as simple, fast and compact as possible.
+* Initialize bDetect and wait for completion.
+
+Other stuff is optional.
+
+----------------------
+INITIALIZATION EXAMPLE
+----------------------
+
+// Cut & paste the following code into your own sqf. file.
+// Place "bdetect.sqf" into your own mission folder.
+
+// First load the framework
+call compile preprocessFileLineNumbers "bdetect.sqf";  // CAUTION: comment this line if you wish to execute the framework from -within- bdetect.sqf file
+
+// Set any optional configuration variables whose value should be other than Default (see all the defined variables in bdetect.sqf, function bdetect_fnc_init() ). 
+// Below some examples.
+bdetect_debug_enable = true;		// Example only - Enable debug / logging in .rpt file. Beware, full levels logging may be massive.
+bdetect_debug_levels = [0,9];		// Example only - Log only some basic messages (levels 0 and 9). Read comment about levels meanings into "bdetect.sqf, function bdetect_fnc_debug()
+bdetect_debug_chat = true;			// Example only - log also into globalChat.
+
+// Now name your own unit callback function (the one that will be triggered when a bullet is detected close to an unit)
+bdetect_callback = "my_function";
+
+// Define your own callback function and its contents, named as above. Here's a prototypical function: 
+my_function = {
+	private [ "_unit", "_bullet", "_proximity", "_data", "_shooter", "_pos", "_time", "_msg" ];
+	
+	_unit = _this select 0;			// unit whi detecting nearby bullet
+	_bullet = _this select 1;		// bullet object
+	_proximity = _this select 2;	// distance between bullet and unit
+	_data = _this select 3;			// Container (array) of misc data, see below:
+	
+	_shooter = _data select 0; 		// enemy shooter
+	_pos = _data select 1;			// starting position of bullet
+	_time = _data select 2; 		// starting time of bullet
+
+	_msg = format["my_function() - [%1] close to bullet %2 fired by %3, proximity=%4m, data=%5", _unit, _bullet, _shooter, _proximity, _data];
+	[ _msg, 9 ] call bdetect_fnc_debug;
+};
+
+// Now initialize framework
+sleep 5; // wait some seconds if you want to load other scripts
+call bdetect_fnc_init;
+
+// Wait for framework to be fully loaded
+waitUntil { bdetect_init_done};
+
+// You are done. Optional: care to activate display of some runtime stats ?
+sleep 5;	// wait some more seconds for CPU load to normalize
+call bdetect_fnc_benchmark; 
+
+// All done, place your other fancy stuff below ...
