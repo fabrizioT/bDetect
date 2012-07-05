@@ -3,6 +3,12 @@ bDetect | bullet detection framework - Changelog
 ------------------------------------------------
 
 -------------
+Version: 0.67
+-------------
+
+* Introduced variable "bdetect_startup_hint": (Boolean, Default true) Toggle to Enable / Disable bDetect startup Hint.
+
+-------------
 Version: 0.66
 -------------
 

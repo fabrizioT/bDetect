@@ -1,8 +1,8 @@
 // ------------------------------------
 // bDetect | bullet detection framework
 // ------------------------------------
-// Version: 0.66
-// Date: 04/07/2012
+// Version: 0.67
+// Date: 05/07/2012
 // Author: Fabrizio_T 
 // Additional code: TPW 
 // File Name: bdetect.sqf
@@ -16,8 +16,8 @@
 
 bdetect_name = "bDetect | Bullet Detection Framework"; 
 bdetect_short_name = "bDetect"; 
-bdetect_version = "0.66";
-bdetect_init_done= false;
+bdetect_version = "0.67";
+bdetect_init_done = false;
 	
 // -----------------------------
 // Functions
@@ -35,7 +35,8 @@ bdetect_fnc_init =
 	// You should set these variables elsewhere, don't edit them here since they're default. 
 	// See bottom of this file for framework initialization example.
 	if(isNil "bdetect_enable") then { bdetect_enable = true; }; // (Boolean, Default true) Toggle to Enable / Disable bdetect altogether.
-
+	if(isNil "bdetect_startup_hint") then { bdetect_startup_hint = true; }; // (Boolean, Default true) Toggle to Enable / Disable bDetect startup Hint.
+	
 	if(isNil "bdetect_debug_enable") then { bdetect_debug_enable = false; }; // (Boolean, Default false) Toggle to Enable / Disable debug messages.
 	if(isNil "bdetect_debug_chat") then { bdetect_debug_chat = false; }; // (Boolean, Default false) Show debug messages also in globalChat.
 	if(isNil "bdetect_debug_levels") then { bdetect_debug_levels = [0,1,2,3,4,5,6,7,8,9]; }; // (Array, Default [0,1,2,3,4,5,6,7,8,9]) Filter debug messages by included levels. 
@@ -104,7 +105,11 @@ bdetect_fnc_eh_loop =
 			_msg = format["%1 v%2 has started", bdetect_short_name, bdetect_version];
 			[ _msg, 0 ] call bdetect_fnc_debug;
 		};
-		hint _msg;
+		
+		if( bdetect_startup_hint ) then {
+			_msg = format["%1 v%2 has started", bdetect_short_name, bdetect_version];
+			hint _msg;
+		};
 	};
 
 	while { true } do
@@ -280,6 +285,7 @@ bdetect_fnc_detect =
 	};
 };
 
+// Subroutine executed within bdetect_fnc_detect()
 bdetect_fnc_detect_sub = 
 {
 	private ["_tot", "_t", "_n", "_bullet", "_data", "_shooter", "_pos", "_time", "_blacklist", "_update_blacklist", "_bpos", "_dist", "_units", "_x", "_data", "_nul"];
@@ -368,6 +374,7 @@ bdetect_fnc_detect_sub =
 	};
 };
 
+// Adapt frequency of some bullet checking depending on minimum FPS
 bdetect_fnc_diag_min_fps =
 {
 	private ["_fps", "_msg"];
@@ -407,7 +414,7 @@ bdetect_fnc_diag_min_fps =
 	bdetect_fps = _fps;
 };
 
-// Function to add a bullet to bdetect_fired_bullets 
+// Add a bullet to bdetect_fired_bullets 
 bdetect_fnc_bullet_add = 
 {
 	private ["_bullet", "_shooter", "_pos", "_time",  "_msg", "_n"];
@@ -427,7 +434,7 @@ bdetect_fnc_bullet_add =
 	};
 };
 
-// Function to tag a bullet to be removed from bdetect_fired_bullets 
+// Tag a bullet to be removed from bdetect_fired_bullets 
 bdetect_fnc_bullet_tag_remove = 
 {
 	private ["_bullet", "_n", "_msg" ];
@@ -447,7 +454,7 @@ bdetect_fnc_bullet_tag_remove =
 	};
 };
 
-// Callback function to be executed from within bdetect_fnc_detect
+// Prototype for callback function to be executed within bdetect_fnc_detect
 bdetect_fnc_callback = 
 {
 	private [ "_unit", "_bullet", "_proximity", "_data", "_shooter", "_pos", "_time", "_msg" ];
@@ -491,7 +498,6 @@ bdetect_fnc_debug =
 	if( bdetect_debug_enable && _level in bdetect_debug_levels) then
 	{
 		_msg = _this select 0;
-	
 		diag_log format["%1 [%2 v%3] Frame:%4 L%5: %6", time, bdetect_short_name, bdetect_version, diag_frameno, _level, _msg ];
 		
 		if( bdetect_debug_chat ) then 
@@ -505,9 +511,9 @@ bdetect_fnc_benchmark =
 {
 	private ["_cnt"];
 	
-	if(isNil "bdetect_stats_max_bullets") then { bdetect_stats_max_bullets = 0;};
-	if(isNil "bdetect_stats_min_fps") then { bdetect_stats_min_fps = 999;};
-	if(isNil "bdetect_fired_bullets") then { bdetect_fired_bullets = [];};
+	if(isNil "bdetect_stats_max_bullets") then { bdetect_stats_max_bullets = 0; };
+	if(isNil "bdetect_stats_min_fps") then { bdetect_stats_min_fps = 999; };
+	if(isNil "bdetect_fired_bullets") then { bdetect_fired_bullets = []; };
 	
 	_nul = [] spawn 
 	{
