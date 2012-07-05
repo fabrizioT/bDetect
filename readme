@@ -2,8 +2,8 @@
 bDetect | bullet detection framework - Readme
 ---------------------------------------------
 
-Version: 0.66
-Date: 04/07/2012
+Version: 0.67
+Date: 05/07/2012
 Author: Fabrizio_T 
 Additional code: TPW 
 File Name: bdetect.sqf
@@ -28,6 +28,7 @@ CONFIGURATION
 -------------
 
 bdetect_enable = true; 								// (Boolean, Default true) Toggle to Enable / Disable bdetect altogether.
+bdetect_startup_hint = true;						// (Boolean, Default true) Toggle to Enable / Disable bDetect startup Hint.
 bdetect_debug_enable = false;  						// (Boolean, Default false) Toggle to Enable / Disable debug messages.
 bdetect_debug_chat = false;  						// (Boolean, Default false) Show debug messages also in globalChat.
 bdetect_debug_levels = [0,1,2,3,4,5,6,7,8,9];  		// (Array, Default [0,1,2,3,4,5,6,7,8,9]) Filter debug messages by included levels. 
