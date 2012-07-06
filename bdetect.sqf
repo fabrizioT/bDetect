@@ -1,12 +1,12 @@
 // ------------------------------------
 // bDetect | bullet detection framework
 // ------------------------------------
-// Version: 0.67
-// Date: 05/07/2012
+// Version: 0.68
+// Date: 06/07/2012
 // Author: Fabrizio_T 
 // Additional code: TPW 
 // File Name: bdetect.sqf
-// License: Free for all
+// License: GNU/GPL
 // ------------------------------------
 
 // BEGINNING OF FRAMEWORK CODE
@@ -16,62 +16,92 @@
 
 bdetect_name = "bDetect | Bullet Detection Framework"; 
 bdetect_short_name = "bDetect"; 
-bdetect_version = "0.67";
+bdetect_version = "0.68";
 bdetect_init_done = false;
 	
+// -----------------------------
+// Global variables
+// -----------------------------
+
+// You should set these variables elsewhere, don't edit them here since they're default. 
+// See bottom of this file for framework initialization example.
+if(isNil "bdetect_enable") then { bdetect_enable = true; }; // (Boolean, Default true) Toggle to Enable / Disable bdetect altogether.
+if(isNil "bdetect_startup_hint") then { bdetect_startup_hint = true; }; // (Boolean, Default true) Toggle to Enable / Disable bDetect startup Hint.
+
+if(isNil "bdetect_debug_enable") then { bdetect_debug_enable = false; }; // (Boolean, Default false) Toggle to Enable / Disable debug messages.
+if(isNil "bdetect_debug_chat") then { bdetect_debug_chat = false; }; // (Boolean, Default false) Show debug messages also in globalChat.
+if(isNil "bdetect_debug_levels") then { bdetect_debug_levels = [0,1,2,3,4,5,6,7,8,9]; }; // (Array, Default [0,1,2,3,4,5,6,7,8,9]) Filter debug messages by included levels. 
+
+if(isNil "bdetect_callback") then { bdetect_callback = "bdetect_fnc_callback"; }; // (String, Default "bdetect_fnc_callback") Name for your own callback function
+if(isNil "bdetect_callback_mode") then { bdetect_callback_mode = "spawn"; }; // (String, Default "spawn") Allowed values: "call" or "spawn"
+
+if(isNil "bdetect_fps_adaptation") then { bdetect_fps_adaptation = true; }; // (Boolean, Default true) Whether bDetect should try to keep over "bdetect_fps_min" FPS while degrading quality of detection
+if(isNil "bdetect_fps_min") then { bdetect_fps_min = 20; }; // (Number, Default 20) The minimum FPS you wish to keep
+if(isNil "bdetect_fps_calc_each_x_frames") then { bdetect_fps_calc_each_x_frames = 16; }; // (Number, Default 16) FPS check is done each "bdetect_fps_min" frames. 1 means each frame.
+
+if(isNil "bdetect_eh_assign_cycle_wait") then { bdetect_eh_assign_cycle_wait = 10; }; // (Seconds, Default 10). Wait duration foreach cyclic execution of bdetect_fnc_eh_loop()
+
+if(isNil "bdetect_bullet_min_delay") then { bdetect_bullet_min_delay = 0.1; }; // (Seconds, Default 0.1) Minimum time between 2 consecutive shots fired by an unit for the last bullet to be tracked. Very low values may cause lag.
+if(isNil "bdetect_bullet_max_delay") then { bdetect_bullet_max_delay = 1.5; }; // (Seconds, Default 2)
+if(isNil "bdetect_bullet_initial_min_speed") then { bdetect_bullet_initial_min_speed = 360; }; // (Meters/Second, Default 360) Bullets slower than this are ignored.
+if(isNil "bdetect_bullet_max_proximity") then { bdetect_bullet_max_proximity = 10; }; // (Meters, Default 10) Maximum proximity to unit for triggering detection
+if(isNil "bdetect_bullet_min_distance") then { bdetect_bullet_min_distance = 25; }; // (Meters, Default 25) Bullets having travelled less than this distance are ignored
+if(isNil "bdetect_bullet_max_distance") then { bdetect_bullet_max_distance = 400; }; // (Meters, Default 400) Bullets havin travelled more than distance are ignored
+if(isNil "bdetect_bullet_max_lifespan") then { bdetect_bullet_max_lifespan = 0.5; }; // (Seconds, Default 0.5) Bullets living more than these seconds are ignored
+if(isNil "bdetect_bullet_max_height") then { bdetect_bullet_max_height = 6; }; // (Meters, Default 6)  Bullets going higher than this -and- diverging from ground are ignored
+if(isNil "bdetect_bullet_skip_mags") then { bdetect_bullet_skip_mags = []; }; // (Array) Skip these bullet types altogether. Example: ["30rnd_9x19_MP5", "30rnd_9x19_MP5SD", "15Rnd_9x19_M9"]
+	 
+if(isNil "bdetect_mp") then { bdetect_mp = false; }; // (Boolean, Default false) Toggle to Enable / Disable MP experimental support
+if(isNil "bdetect_mp_per_frame_emulation") then { bdetect_mp_per_frame_emulation = false; }; // (Boolean, Default false) Toggle to Enable / Disable experimental server per-frame-execution emulation
+if(isNil "bdetect_mp_per_frame_emulation_frame_d") then { bdetect_mp_per_frame_emulation_frame_d = 0.025; };  // (Seconds, Default 0.025) Experimental server per-frame-execution emulation timeout
+
+// NEVER edit the variables below, please.
+if(isNil "bdetect_fired_bullets") then { bdetect_fired_bullets = []; };
+if(isNil "bdetect_fired_bullets_count") then { bdetect_fired_bullets_count = 0; };
+if(isNil "bdetect_fired_bullets_count_tracked") then { bdetect_fired_bullets_count_tracked = 0; };
+if(isNil "bdetect_fired_bullets_count_detected") then { bdetect_fired_bullets_count_detected = 0; };
+if(isNil "bdetect_fired_bullets_count_blacklisted") then { bdetect_fired_bullets_count_blacklisted = 0; };	
+if(isNil "bdetect_units_count") then { bdetect_units_count = 0; };
+if(isNil "bdetect_units_count_killed") then { bdetect_units_count_killed = 0; };
+if(isNil "bdetect_fps") then { bdetect_fps = bdetect_fps_min; };
+if(isNil "bdetect_bullet_delay") then { bdetect_bullet_delay = bdetect_bullet_min_delay; };
+if(isNil "bdetect_frame_tstamp") then { bdetect_frame_tstamp = 0; };
+if(isNil "bdetect_frame_min_duration") then { bdetect_frame_min_duration = (bdetect_bullet_max_proximity * 2 * .66 / 600) max .01; };
+
 // -----------------------------
 // Functions
 // -----------------------------
 
+bdetect_fnc_per_frame_emulation = 
+{
+	private ["_fnc", "_msg"];
+		
+	if( bdetect_debug_enable ) then {
+		_msg = format["Started bdetect_fnc_per_frame_emulation()"];
+		[ _msg, 8 ] call bdetect_fnc_debug;
+	};
+		
+	while { true } do 
+	{
+		call bdetect_fnc_detect;
+		
+		if( bdetect_debug_enable ) then {
+			_msg = format["bdetect_fnc_per_frame_emulation() iteration"];
+			[ _msg, 8 ] call bdetect_fnc_debug;
+		};
+	
+		sleep bdetect_mp_per_frame_emulation_frame_d;
+	};
+};
+
 bdetect_fnc_init = 
 {
-	private [ "_msg" ];
+	private [ "_msg", "_nul" ];
 
 	if( bdetect_debug_enable ) then {
 		_msg = format["%1 v%2 is starting ...", bdetect_short_name, bdetect_version];
 		[ _msg, 0 ] call bdetect_fnc_debug;
 	};
-
-	// You should set these variables elsewhere, don't edit them here since they're default. 
-	// See bottom of this file for framework initialization example.
-	if(isNil "bdetect_enable") then { bdetect_enable = true; }; // (Boolean, Default true) Toggle to Enable / Disable bdetect altogether.
-	if(isNil "bdetect_startup_hint") then { bdetect_startup_hint = true; }; // (Boolean, Default true) Toggle to Enable / Disable bDetect startup Hint.
-	
-	if(isNil "bdetect_debug_enable") then { bdetect_debug_enable = false; }; // (Boolean, Default false) Toggle to Enable / Disable debug messages.
-	if(isNil "bdetect_debug_chat") then { bdetect_debug_chat = false; }; // (Boolean, Default false) Show debug messages also in globalChat.
-	if(isNil "bdetect_debug_levels") then { bdetect_debug_levels = [0,1,2,3,4,5,6,7,8,9]; }; // (Array, Default [0,1,2,3,4,5,6,7,8,9]) Filter debug messages by included levels. 
-
-	if(isNil "bdetect_callback") then { bdetect_callback = "bdetect_fnc_callback"; }; // (String, Default "bdetect_fnc_callback") Name for your own callback function
-	if(isNil "bdetect_callback_mode") then { bdetect_callback_mode = "spawn"; }; // (String, Default "spawn") Allowed values: "call" or "spawn"
-
-	if(isNil "bdetect_fps_adaptation") then { bdetect_fps_adaptation = true; }; // (Boolean, Default true) Whether bDetect should try to keep over "bdetect_fps_min" FPS while degrading quality of detection
-	if(isNil "bdetect_fps_min") then { bdetect_fps_min = 20; }; // (Number, Default 20) The minimum FPS you wish to keep
-	if(isNil "bdetect_fps_calc_each_x_frames") then { bdetect_fps_calc_each_x_frames = 16; }; // (Number, Default 16) FPS check is done each "bdetect_fps_min" frames. 1 means each frame.
-
-	if(isNil "bdetect_eh_assign_cycle_wait") then { bdetect_eh_assign_cycle_wait = 10; }; // (Seconds, Default 10). Wait duration foreach cyclic execution of bdetect_fnc_eh_loop()
-
-	if(isNil "bdetect_bullet_min_delay") then { bdetect_bullet_min_delay = 0.1; }; // (Seconds, Default 0.1) Minimum time between 2 consecutive shots fired by an unit for the last bullet to be tracked. Very low values may cause lag.
-	if(isNil "bdetect_bullet_max_delay") then { bdetect_bullet_max_delay = 1.5; }; // (Seconds, Default 2)
-	if(isNil "bdetect_bullet_initial_min_speed") then { bdetect_bullet_initial_min_speed = 360; }; // (Meters/Second, Default 360) Bullets slower than this are ignored.
-	if(isNil "bdetect_bullet_max_proximity") then { bdetect_bullet_max_proximity = 10; }; // (Meters, Default 10) Maximum proximity to unit for triggering detection
-	if(isNil "bdetect_bullet_min_distance") then { bdetect_bullet_min_distance = 25; }; // (Meters, Default 25) Bullets having travelled less than this distance are ignored
-	if(isNil "bdetect_bullet_max_distance") then { bdetect_bullet_max_distance = 400; }; // (Meters, Default 400) Bullets havin travelled more than distance are ignored
-	if(isNil "bdetect_bullet_max_lifespan") then { bdetect_bullet_max_lifespan = 0.5; }; // (Seconds, Default 0.5) Bullets living more than these seconds are ignored
-	if(isNil "bdetect_bullet_max_height") then { bdetect_bullet_max_height = 6; }; // (Meters, Default 6)  Bullets going higher than this -and- diverging from ground are ignored
-	if(isNil "bdetect_bullet_skip_mags") then { bdetect_bullet_skip_mags = []; }; // (Array) Skip these bullet types altogether. Example: ["30rnd_9x19_MP5", "30rnd_9x19_MP5SD", "15Rnd_9x19_M9"]
-		 
-	// NEVER edit the variables below, please.
-	if(isNil "bdetect_fired_bullets") then { bdetect_fired_bullets = []; };
-	if(isNil "bdetect_fired_bullets_count") then { bdetect_fired_bullets_count = 0; };
-	if(isNil "bdetect_fired_bullets_count_tracked") then { bdetect_fired_bullets_count_tracked = 0; };
-	if(isNil "bdetect_fired_bullets_count_detected") then { bdetect_fired_bullets_count_detected = 0; };
-	if(isNil "bdetect_fired_bullets_count_blacklisted") then { bdetect_fired_bullets_count_blacklisted = 0; };	
-	if(isNil "bdetect_units_count") then { bdetect_units_count = 0; };
-	if(isNil "bdetect_units_count_killed") then { bdetect_units_count_killed = 0; };
-	if(isNil "bdetect_fps") then { bdetect_fps = bdetect_fps_min; };
-	if(isNil "bdetect_bullet_delay") then { bdetect_bullet_delay = bdetect_bullet_min_delay; };
-	if(isNil "bdetect_frame_tstamp") then { bdetect_frame_tstamp = 0; };
-	if(isNil "bdetect_frame_min_duration") then { bdetect_frame_min_duration = (bdetect_bullet_max_proximity * 2 * .66 / 600) max .01; };
 
 	// bullet speed converted to kmh
 	bdetect_bullet_initial_min_speed = bdetect_bullet_initial_min_speed * 3.6;
@@ -80,12 +110,18 @@ bdetect_fnc_init =
 	bdetect_callback_compiled = call compile format["%1", bdetect_callback];
 
 	// Add per-frame execution of time-critical function
-	[bdetect_fnc_detect,0] call cba_fnc_addPerFrameHandler;   
+	if( bdetect_mp && bdetect_mp_per_frame_emulation ) then 
+	{
+		_nul = [] spawn bdetect_fnc_per_frame_emulation;  
+	}
+	else
+	{
+		[bdetect_fnc_detect,0] call cba_fnc_addPerFrameHandler;   
+	};
 	
-	// Assign event handlers to any units (eve spawned ones)
+	// Assign event handlers to any units (even spawned ones)
 	bdetect_spawned_loop_handler = [] spawn bdetect_fnc_eh_loop;   
 };
-
 
 // Keep searching units for newly spawned ones and assign fired EH to them
 bdetect_fnc_eh_loop =
@@ -135,11 +171,17 @@ bdetect_fnc_eh_add =
 	// handling units
 	if( isNil { _unit getVariable "bdetect_fired_eh" } ) then
 	{
-		_e = _unit addEventHandler ["Fired", bdetect_fnc_fired];
+		_e = _unit addeventHandler ["Fired", bdetect_fnc_fired];
 		_unit setVariable ["bdetect_fired_eh", _e]; 
 		
-		_e =_unit addEventHandler ["Killed", bdetect_fnc_killed];
+		_e = _unit addeventHandler ["Killed", bdetect_fnc_killed];
 		_unit setVariable ["bdetect_killed_eh", _e]; 
+		
+		if( bdetect_mp ) then
+		{
+			_e = _unit addMPeventHandler ["MPKilled", bdetect_fnc_killed];
+			_unit setVariable ["bdetect_killed_eh_mp", _e]; 
+		};
 		
 		bdetect_units_count = bdetect_units_count + 1;
 		
@@ -164,8 +206,14 @@ bdetect_fnc_eh_add =
 			_vehicle addeventhandler ["Fired", bdetect_fnc_fired];  
 			_vehicle setVariable ["bdetect_fired_eh", _e]; 
 			
-			_vehicle addEventHandler ["Killed", bdetect_fnc_killed];		
-			_vehicle setVariable ["bdetect_killed_eh", _e]; 	
+			_vehicle addeventHandler ["Killed", bdetect_fnc_killed];		
+			_vehicle setVariable ["bdetect_killed_eh", _e]; 
+			
+			if( bdetect_mp ) then
+			{
+				_vehicle addMPeventHandler ["MPKilled", bdetect_fnc_killed];		
+				_vehicle setVariable ["bdetect_killed_eh_mp", _e]; 	
+			};
 			
 			bdetect_units_count = bdetect_units_count + 1;			
 			
@@ -177,7 +225,7 @@ bdetect_fnc_eh_add =
 		else
 		{
 			if( bdetect_debug_enable ) then {
-				_msg = format["[%1] already had an assigned 'Fired' EH", _unit];
+				_msg = format["[%1] already had an assigned 'Fired' EH", _vehicle];
 				[ _msg, 3 ] call bdetect_fnc_debug;
 			};
 		};
@@ -191,16 +239,24 @@ bdetect_fnc_killed =
 	
 	_unit = _this select 0;
 	
-	_e = _unit getVariable "bdetect_fired_eh";
-	_unit removeEventHandler ["fired", _e];
-	
-	_e = _unit getVariable "bdetect_killed_eh";
-	_unit removeEventHandler ["killed", _e];
-	
-	_unit setVariable ["bdetect_fired_eh", nil];
-	_unit setVariable ["bdetect_killed_eh", nil];
-	
-	bdetect_units_count_killed = bdetect_units_count_killed + 1;
+	if( local _unit) then
+	{
+		_e = _unit getVariable "bdetect_fired_eh";
+		_unit removeEventHandler ["fired", _e];
+		
+		_e = _unit getVariable "bdetect_killed_eh";
+		_unit removeEventHandler ["killed", _e];
+		
+		_unit setVariable ["bdetect_fired_eh", nil];
+		_unit setVariable ["bdetect_killed_eh", nil];
+		
+		if( bdetect_mp ) then
+		{
+			_unit setVariable ["bdetect_killed_eh_mp", nil];
+		};
+		
+		bdetect_units_count_killed = bdetect_units_count_killed + 1;
+	};
 };
 
 // Fired EH
@@ -341,9 +397,9 @@ bdetect_fnc_detect_sub =
 							bdetect_fired_bullets_count_detected = bdetect_fired_bullets_count_detected + 1;
 										
 							if( bdetect_callback_mode == "spawn" ) then {
-								_nul = [_x, _bullet, _x distance _bpos, _data] spawn bdetect_callback_compiled;
+								_nul = [_x, _bullet, _bpos, _data] spawn bdetect_callback_compiled;
 							} else {
-								[_x, _bullet, _x distance _bpos, _data] call bdetect_callback_compiled;
+								[_x, _bullet, _bpos, _data] call bdetect_callback_compiled;
 							};
 							
 							if( bdetect_debug_enable ) then {
@@ -461,8 +517,9 @@ bdetect_fnc_callback =
 	
 	_unit = _this select 0;		// unit being under fire
 	_bullet = _this select 1;	// bullet object
-	_proximity = _this select 2;	// distance between _bullet and _unit
+	_bpos = _this select 2;	// bullet position
 	_data = _this select 3;		// Array containing more data
+	_proximity = _bpos distance _unit;	// distance between _bullet and _unit
 	
 	_shooter = _data select 0; // shooter
 	_pos = _data select 1;	// starting position of bullet
@@ -490,6 +547,7 @@ bdetect_fnc_debug =
 	4 = Frame related messages
 	5 = Unit blacklist messages
 	...
+	8 = MP related messages
 	9 = Unit detection related messages
 	*/
 	

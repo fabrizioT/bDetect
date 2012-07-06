@@ -3,6 +3,17 @@ bDetect | bullet detection framework - Changelog
 ------------------------------------------------
 
 -------------
+Version: 0.68
+-------------
+
+* WARNING: this is an experimental build. Keep using stable v0.67 BETA for production purpose.
+* Introduced variable "bdetect_mp": (Boolean, Default false) Toggle to Enable / Disable MP experimental support
+* Introduced variable "bdetect_mp_per_frame_emulation": (Boolean, Default false) Toggle to Enable / Disable experimental server per-frame-execution emulation
+* Introduced variable "bdetect_mp_per_frame_emulation_frame_d": (Seconds, Default 0.025) Per-frame-execution emulation frame duration
+* Changed callback function: 3rd variable ( _this select 2 ) is now bullet position ( _bpos) and not proximity anymore. Proximity can be computed trivially as distance between unit and _bpos.  (Thanks Ollem)
+* Minor bugfixes
+
+-------------
 Version: 0.67
 -------------
 

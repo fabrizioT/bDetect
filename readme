@@ -2,7 +2,7 @@
 bDetect | bullet detection framework - Readme
 ---------------------------------------------
 
-Version: 0.67
+Version: 0.68
 Date: 05/07/2012
 Author: Fabrizio_T 
 Additional code: TPW 
@@ -47,6 +47,9 @@ bdetect_bullet_max_distance = 400; 					// (Meters, Default 400) Bullets havin t
 bdetect_bullet_max_lifespan = 0.5; 					// (Seconds, Default 0.5) Bullets living more than these seconds are ignored
 bdetect_bullet_max_height = 6; 						// (Meters, Default 6) Bullets going higher than this -and- diverging from ground are ignored
 bdetect_bullet_skip_mags = []; 						// (Array) Skip these bullet types altogether. Example: ["30rnd_9x19_MP5", "30rnd_9x19_MP5SD", "15Rnd_9x19_M9"]
+bdetect_mp = false;  								// (Boolean, Default false) Toggle to Enable / Disable MP experimental support
+bdetect_mp_per_frame_emulation = false;  			// (Boolean, Default false) Toggle to Enable / Disable experimental server per-frame-execution emulation
+bdetect_mp_per_frame_emulation_frame_d = 0.05;  	// (Seconds, Default 0.025) Per-frame-execution emulation frame duration
 
 -------------
 HOW TO RUN IT
@@ -86,10 +89,11 @@ bdetect_callback = "my_function";
 my_function = {
 	private [ "_unit", "_bullet", "_proximity", "_data", "_shooter", "_pos", "_time", "_msg" ];
 	
-	_unit = _this select 0;			// unit whi detecting nearby bullet
-	_bullet = _this select 1;		// bullet object
-	_proximity = _this select 2;	// distance between bullet and unit
-	_data = _this select 3;			// Container (array) of misc data, see below:
+	_unit = _this select 0;		// unit being under fire
+	_bullet = _this select 1;	// bullet object
+	_bpos = _this select 2	// bullet position
+	_data = _this select 3;		// Array containing more data
+	_proximity = _bpos distance _unit;	// distance between _bullet and _unit
 	
 	_shooter = _data select 0; 		// enemy shooter
 	_pos = _data select 1;			// starting position of bullet
