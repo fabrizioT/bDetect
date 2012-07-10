@@ -2,32 +2,51 @@
 bDetect | bullet detection framework - Changelog
 ------------------------------------------------
 
--------------
-Version: 0.68
--------------
+------------------
+Version: 0.70 BETA
+------------------
 
-* WARNING: this is an experimental build. Keep using stable v0.67 BETA for production purpose.
+* WARNING! This is an experimental SP/MP combined build. Use at your own risk, please give feedback.
+* MP logics should be considered ALPHA grade at this stage.
+* Introduced additional internal variables "bdetect_mp_xxx".
+
+------------------
+Version: 0.69 BETA
+------------------
+
+* WARNING! This is an experimental build. Keep using stable v0.67 BETA for production purpose (SP).
+* WARNING! Changed callback function params ( again ): see for reference current default callback: bdetect_fnc_callback().
+* Renamed "bdetect_mp" to "bdetect_mp_enable".
+* Added MP base logics (Ollem), "bdetect_mp_enable = true" required to check it out. MP implementation is to be considered partial and ALPHA state.
+* Debug level for all MP related messages is 8.
+* Fix for uphill shooting, into bdetect_fnc_detect_sub() function.
+
+------------------
+Version: 0.68 BETA
+------------------
+
+* WARNING! This is an experimental build. Keep using stable v0.67 BETA for production purpose (SP).
+* WARNING! Changed callback function: 3rd variable ( _this select 2 ) is now bullet position ( _bpos) and not proximity anymore. Proximity can be computed trivially as distance between unit and _bpos.  (Thanks Ollem)
 * Introduced variable "bdetect_mp": (Boolean, Default false) Toggle to Enable / Disable MP experimental support
 * Introduced variable "bdetect_mp_per_frame_emulation": (Boolean, Default false) Toggle to Enable / Disable experimental server per-frame-execution emulation
-* Introduced variable "bdetect_mp_per_frame_emulation_frame_d": (Seconds, Default 0.025) Per-frame-execution emulation frame duration
-* Changed callback function: 3rd variable ( _this select 2 ) is now bullet position ( _bpos) and not proximity anymore. Proximity can be computed trivially as distance between unit and _bpos.  (Thanks Ollem)
+* Introduced variable "bdetect_mp_per_frame_emulation_frame_d": (Seconds, Default 0.025) frame duration
 * Minor bugfixes
 
--------------
-Version: 0.67
--------------
+------------------
+Version: 0.67 BETA
+------------------
 
 * Introduced variable "bdetect_startup_hint": (Boolean, Default true) Toggle to Enable / Disable bDetect startup Hint.
 
--------------
-Version: 0.66
--------------
+------------------
+Version: 0.66 BETA
+------------------
 
 * Internal code optimization (thanks Sickboy)
 
--------------
-Version: 0.65
--------------
+------------------
+Version: 0.65 BETA
+------------------
 
 * Added "killed" event handler
 * Renamed function bdetect_fnc_eh_fired_add() to bdetect_fnc_eh_add()
@@ -37,35 +56,35 @@ Version: 0.65
 * Introduced variable "bdetect_fps_adaptation": (Boolean, Default true). Defines whether bDetect should try to keep FPS over "bdetect_fps_min", through degrading quality of detection
 * Tweaks to code and example syntax
 
--------------
-Version: 0.64
--------------
+------------------
+Version: 0.64 BETA
+------------------
 
 * Incorporated suggestions from tpw: http://forums.bistudio.com/showthread.php?136304-TPWC-AI-suppression-system&p=2182742&viewfull=1#post2182742
 * Minor optimization / fixes
 * Introduced variable "bdetect_callback_mode": (String, Default "spawn") Allowed values: "call" or "spawn". It controls synchronous vs.asynchronous bdetect_callback() execution.
 
--------------
-Version: 0.63
--------------
+------------------
+Version: 0.63 BETA
+------------------
 
 * Reverted  to "time" from "diag_tickTime", for issues to be looked in
 
--------------
-Version: 0.62
--------------
+------------------
+Version: 0.62 BETA
+------------------
 
 * Fixed bullet position handling
 
--------------
-Version: 0.61
--------------
+------------------
+Version: 0.61 BETA
+------------------
 
 * Fixed problem with units eventually detecting own shots
 
-------------
-Version: 0.6
-------------
+-----------------
+Version: 0.6 BETA
+-----------------
 
 * Incorporated v0.51 changes/fixes by tpw.
 * Function bdetect_fnc_callback() slightly changed. See bottom of this file for example.
@@ -82,9 +101,9 @@ Version: 0.6
 * Introduced variable "bdetect_debug_chat": (Boolean, Default false) Show debug messages also in globalChat.
 * Changed Variable "bdetect_debug_min_level" to "bdetect_debug_levels". (Array). Default [0,1,2,3,4,5,6,7,8,9]. 0-9 are reserved levels.
 
-------------
-Version: 0.5
-------------
+-----------------
+Version: 0.5 BETA
+-----------------
 
 * Framework is named "bdetect" and contained into a single file: bdetect.sqf 
 * Renamed variable "bdetect_debug" to "bdetect_debug_enable"
@@ -94,9 +113,9 @@ Version: 0.5
 * Functions and variable names polishing. All vars named bdetect_<varname>. All functions named bdetect_fnc_<funcname>.
 * Added some missing private vars.
 
-------------
-Version: 0.4
-------------
+-----------------
+Version: 0.4 BETA
+-----------------
 
 * Introduced variables "bdetect_enable" (boolean), "bdetect_debug_levels" (Number), "bdetect_bullet_skip_mags" (array).
 * Variable "bdetect_enable" act as a toggle to enable / disable framework.
@@ -104,18 +123,18 @@ Version: 0.4
 * Introduced function bdetect_fnc_benchmark() to display performance stats.
 * Added "bdetect_bullet_skip_mags", which is a blacklist of bullet types which should not trigger detection
 
-------------
-Version: 0.3
-------------
+-----------------
+Version: 0.3 BETA
+-----------------
 
 * Introduced variables "bdetect_bullet_delay" (seconds) , "bdetect_bullet_max_height" (meters).
 * Variable "bdetect_bullet_delay" (seconds) changes dinamycally between "bdetect_bullet_min_delay" (lower bound) and 1 (upper bound), depending on actual FPS vs "bdetect_fps_min".
 * Variable "bdetect_bullet_max_height" (meters) is the maximum height for bullets, over ground. Bullets higher than this value (Default: 10) and with up vector > 0 are skipped from detection, since they are too high and diverge from ground.
 * Some Code optimization.
 
-------------
-Version: 0.2
-------------
+-----------------
+Version: 0.2 BETA
+-----------------
 
 * Position of bullet as SetPosASL.
 * Introduced variables "bdetect_fps_min" (fps), "bdetect_bullet_max_distance" (meters), "bdetect_bullet_max_lifespan" (seconds).
@@ -123,8 +142,8 @@ Version: 0.2
 * Function bdetect_fnc_bullet_remove() edited and renamed to bdetect_fnc_bullet_tag_remove(), since actual removal is done elsewhere.
 * Bullets are removed from bdetect_fired_bullets if distance is over "bdetect_bullet_max_distance" meters or lifespan is over "bdetect_bullet_max_lifespan" seconds.
 
-------------
-Version: 0.1
-------------
+-----------------
+Version: 0.1 BETA
+-----------------
 
 * First draft

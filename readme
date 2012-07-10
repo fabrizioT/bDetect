@@ -2,30 +2,31 @@
 bDetect | bullet detection framework - Readme
 ---------------------------------------------
 
-Version: 0.68
-Date: 05/07/2012
-Author: Fabrizio_T 
-Additional code: TPW 
+Version: 0.70 BETA
+Date: 10/07/2012
+Author: Fabrizio_T, Ollem (MP code)
+Additional code: TPW
 File Name: bdetect.sqf
+License: GNU/GPL
 
-----------
+---------------------------------------------
 WHAT IS IT
-----------
+---------------------------------------------
 
-It's a small ( around 400 lines of code) framework in form of single .sqf file, named "bdetect.sqf". Basic scripting knowledge required.
+It's a small SP (Single Player) framework in form of single .sqf file, named "bdetect.sqf". Basic scripting knowledge required.
 It was made in order to easily detect any flying bullets close to infantrymen, given some basic configuration (See: CONFIGURATION).
 Once a bullet is found being closer enough to some unit, a custom callback function is called: it's up to you defining the contents of this callback function.
 
-------------
+---------------------------------------------
 REQUIREMENTS
-------------
+---------------------------------------------
 
 * ArmA2 CO v1.61 BETA or higher (but v1.60 should probably work too)
 * CBA - Community Made Addons: https://dev-heaven.net/projects/cca/wiki/CBA
 
--------------
+---------------------------------------------
 CONFIGURATION
--------------
+---------------------------------------------
 
 bdetect_enable = true; 								// (Boolean, Default true) Toggle to Enable / Disable bdetect altogether.
 bdetect_startup_hint = true;						// (Boolean, Default true) Toggle to Enable / Disable bDetect startup Hint.
@@ -47,13 +48,13 @@ bdetect_bullet_max_distance = 400; 					// (Meters, Default 400) Bullets havin t
 bdetect_bullet_max_lifespan = 0.5; 					// (Seconds, Default 0.5) Bullets living more than these seconds are ignored
 bdetect_bullet_max_height = 6; 						// (Meters, Default 6) Bullets going higher than this -and- diverging from ground are ignored
 bdetect_bullet_skip_mags = []; 						// (Array) Skip these bullet types altogether. Example: ["30rnd_9x19_MP5", "30rnd_9x19_MP5SD", "15Rnd_9x19_M9"]
-bdetect_mp = false;  								// (Boolean, Default false) Toggle to Enable / Disable MP experimental support
+bdetect_mp_enable = false;  						// (Boolean, Default false) Toggle to Enable / Disable MP experimental support
 bdetect_mp_per_frame_emulation = false;  			// (Boolean, Default false) Toggle to Enable / Disable experimental server per-frame-execution emulation
 bdetect_mp_per_frame_emulation_frame_d = 0.05;  	// (Seconds, Default 0.025) Per-frame-execution emulation frame duration
 
--------------
+---------------------------------------------
 HOW TO RUN IT
--------------
+---------------------------------------------
 
 Running bDetect is straightforward if you have some basic knowledge of .sqf scripting. 
 There are 5 simple required steps, to be executed from within your own .sqf script file:
@@ -66,52 +67,8 @@ There are 5 simple required steps, to be executed from within your own .sqf scri
 
 Other stuff is optional.
 
-----------------------
+---------------------------------------------
 INITIALIZATION EXAMPLE
-----------------------
+---------------------------------------------
 
-// Cut & paste the following code into your own sqf. file.
-// Place "bdetect.sqf" into your own mission folder.
-
-// First load the framework
-call compile preprocessFileLineNumbers "bdetect.sqf";  // CAUTION: comment this line if you wish to execute the framework from -within- bdetect.sqf file
-
-// Set any optional configuration variables whose value should be other than Default (see all the defined variables in bdetect.sqf, function bdetect_fnc_init() ). 
-// Below some examples.
-bdetect_debug_enable = true;		// Example only - Enable debug / logging in .rpt file. Beware, full levels logging may be massive.
-bdetect_debug_levels = [0,9];		// Example only - Log only some basic messages (levels 0 and 9). Read comment about levels meanings into "bdetect.sqf, function bdetect_fnc_debug()
-bdetect_debug_chat = true;			// Example only - log also into globalChat.
-
-// Now name your own unit callback function (the one that will be triggered when a bullet is detected close to an unit)
-bdetect_callback = "my_function";
-
-// Define your own callback function and its contents, named as above. Here's a prototypical function: 
-my_function = {
-	private [ "_unit", "_bullet", "_proximity", "_data", "_shooter", "_pos", "_time", "_msg" ];
-	
-	_unit = _this select 0;		// unit being under fire
-	_bullet = _this select 1;	// bullet object
-	_bpos = _this select 2	// bullet position
-	_data = _this select 3;		// Array containing more data
-	_proximity = _bpos distance _unit;	// distance between _bullet and _unit
-	
-	_shooter = _data select 0; 		// enemy shooter
-	_pos = _data select 1;			// starting position of bullet
-	_time = _data select 2; 		// starting time of bullet
-
-	_msg = format["my_function() - [%1] close to bullet %2 fired by %3, proximity=%4m, data=%5", _unit, _bullet, _shooter, _proximity, _data];
-	[ _msg, 9 ] call bdetect_fnc_debug;
-};
-
-// Now initialize framework
-sleep 5; // wait some seconds if you want to load other scripts
-call bdetect_fnc_init;
-
-// Wait for framework to be fully loaded
-waitUntil { bdetect_init_done};
-
-// You are done. Optional: care to activate display of some runtime stats ?
-sleep 5;	// wait some more seconds for CPU load to normalize
-call bdetect_fnc_benchmark; 
-
-// All done, place your other fancy stuff below ...
+See bottom part of bdetect.sqf for instructions.
