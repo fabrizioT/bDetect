@@ -46,7 +46,6 @@ if(isNil "bdetect_bullet_max_distance") then { bdetect_bullet_max_distance = 400
 if(isNil "bdetect_bullet_max_lifespan") then { bdetect_bullet_max_lifespan = 0.5; }; 							// (Seconds, Default 0.5) Bullets living more than these seconds are ignored
 if(isNil "bdetect_bullet_max_height") then { bdetect_bullet_max_height = 6; }; 									// (Meters, Default 6)  Bullets going higher than this -and- diverging from ground are ignored
 if(isNil "bdetect_bullet_skip_mags") then { bdetect_bullet_skip_mags = []; }; 									// (Array) Skip these bullet types altogether. Example: ["30rnd_9x19_MP5", "30rnd_9x19_MP5SD", "15Rnd_9x19_M9"]
-if(isNil "bdetect_filter_units") then { bdetect_filter_units = allUnits; }; 									// 
 if(isNil "bdetect_mp_enable") then { bdetect_mp_enable = true; }; 												// (Boolean, Default false) Toggle to Enable / Disable MP experimental support
 if(isNil "bdetect_mp_per_frame_emulation") then { bdetect_mp_per_frame_emulation = false; }; 					// (Boolean, Default false) Toggle to Enable / Disable experimental server per-frame-execution emulation
 if(isNil "bdetect_mp_per_frame_emulation_frame_d") then { bdetect_mp_per_frame_emulation_frame_d = 0.025; };  	// (Seconds, Default 0.025) Experimental server per-frame-execution emulation timeout
@@ -145,7 +144,7 @@ bdetect_fnc_eh_loop =
 	while { true } do // iteratively add EH to all units spawned at runtime
 	{
 		if ( bdetect_mp_is_server || bdetect_mp_is_local ) then { 
-			{ [_x] call bdetect_fnc_eh_add; } foreach bdetect_filter_units; 
+			{ [_x] call bdetect_fnc_eh_add; } foreach allUnits; 
 		} else { 
 			[player] call bdetect_fnc_eh_add; // on client only process players
 		};  
