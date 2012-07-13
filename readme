@@ -2,8 +2,8 @@
 bDetect | bullet detection framework - Readme
 ---------------------------------------------
 
-Version: 0.70 BETA
-Date: 10/07/2012
+Version: 0.72 BETA
+Date: 13/07/2012
 Author: Fabrizio_T, Ollem (MP code)
 Additional code: TPW
 File Name: bdetect.sqf
@@ -40,17 +40,17 @@ bdetect_fps_min = 20; 								// (Number, Default 20) The minimum FPS you wish t
 bdetect_fps_calc_each_x_frames = 16; 				// (Number, Default 16) FPS check is done each "bdetect_fps_min" frames. 1 means each frame.
 bdetect_eh_assign_cycle_wait = 10;  				// (Seconds, Default 10). Wait duration foreach cyclic execution of bdetect_fnc_eh_loop()
 bdetect_bullet_min_delay = 0.1; 					// (Seconds, Default 0.1) Minimum delay between 2 consecutive shots fired by a single unit for the last bullet to be tracked. BEWARE: Very low values may lag.
-bdetect_bullet_max_delay = 1.5; 					// (Seconds, Default 2)
+bdetect_bullet_max_delay = 2; 						// (Seconds, Default 2)
 bdetect_bullet_initial_min_speed = 360; 			// (Meters/Second, Default 360) Bullets slower than this are ignored.
 bdetect_bullet_max_proximity = 10; 					// (Meters, Default 10) Maximum proximity to unit for triggering detection
 bdetect_bullet_min_distance = 25; 					// (Meters, Default 25) Bullets having travelled less than this distance are ignored
-bdetect_bullet_max_distance = 400; 					// (Meters, Default 400) Bullets havin travelled more than distance are ignored
-bdetect_bullet_max_lifespan = 0.5; 					// (Seconds, Default 0.5) Bullets living more than these seconds are ignored
-bdetect_bullet_max_height = 6; 						// (Meters, Default 6) Bullets going higher than this -and- diverging from ground are ignored
+bdetect_bullet_max_distance = 500; 					// (Meters, Default 500) Bullets havin travelled more than distance are ignored
+bdetect_bullet_max_lifespan = 0.7; 					// (Seconds, Default 0.7) Bullets living more than these seconds are ignored
+bdetect_bullet_max_height = 8; 						// (Meters, Default 8) Bullets going higher than this -and- diverging from ground are ignored
 bdetect_bullet_skip_mags = []; 						// (Array) Skip these bullet types altogether. Example: ["30rnd_9x19_MP5", "30rnd_9x19_MP5SD", "15Rnd_9x19_M9"]
 bdetect_mp_enable = false;  						// (Boolean, Default false) Toggle to Enable / Disable MP experimental support
 bdetect_mp_per_frame_emulation = false;  			// (Boolean, Default false) Toggle to Enable / Disable experimental server per-frame-execution emulation
-bdetect_mp_per_frame_emulation_frame_d = 0.05;  	// (Seconds, Default 0.025) Per-frame-execution emulation frame duration
+bdetect_mp_per_frame_emulation_frame_d = 0.02;  	// (Seconds, Default 0.02) Per-frame-execution emulation frame duration
 
 ---------------------------------------------
 HOW TO RUN IT
