@@ -3,13 +3,22 @@ bDetect | bullet detection framework - Changelog
 ------------------------------------------------
 
 ------------------
+Version: 0.73 BETA
+------------------
+
+* Fixed Bug causing multiple Event handlers assignments to vehicles.
+* Changed initialization wait-code, new syntax: waitUntil { !(isNil "bdetect_init_done") };
+* "bdetect_callback" function name can be dynamycally changed at runtime.
+* Minor tweaks.
+
+------------------
 Version: 0.72 BETA
 ------------------
 
 * WARNING! This is an experimental SP/MP combined build. Use at your own risk, please give feedback.
 * MP logics should be considered ALPHA grade at this stage.
-* Variable "bdetect_mp_enable" set to true per-default
-* MP Optimization & Fixes
+* Variable "bdetect_mp_enable" set to true per-default.
+* MP Optimization & Fixes.
 
 ------------------
 Version: 0.70 BETA

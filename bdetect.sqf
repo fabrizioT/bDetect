@@ -1,8 +1,8 @@
 // -------------------------------------------------------------------------------------------
 // bDetect | bullet detection framework
 // -------------------------------------------------------------------------------------------
-// Version: 0.72 BETA
-// Date: 13/07/2012
+// Version: 0.73 BETA
+// Date: 03/08/2012
 // Author: Fabrizio_T, Ollem (MP code)
 // Additional code: TPW
 // File Name: bdetect.sqf
@@ -17,8 +17,7 @@
 
 bdetect_name 		= "bDetect | Bullet Detection Framework"; 
 bdetect_name_short 	= "bDetect"; 
-bdetect_version 	= "0.72 BETA";
-bdetect_init_done 	= false;
+bdetect_version 	= "0.73 BETA";
 	
 // -------------------------------------------------------------------------------------------
 // Global variables
@@ -41,7 +40,7 @@ if(isNil "bdetect_bullet_min_delay") then { bdetect_bullet_min_delay = 0.1; }; 	
 if(isNil "bdetect_bullet_max_delay") then { bdetect_bullet_max_delay = 2; }; 									// (Seconds, Default 2)
 if(isNil "bdetect_bullet_initial_min_speed") then { bdetect_bullet_initial_min_speed = 360; }; 					// (Meters/Second, Default 360) Bullets slower than this are ignored.
 if(isNil "bdetect_bullet_max_proximity") then { bdetect_bullet_max_proximity = 10; }; 							// (Meters, Default 10) Maximum proximity to unit for triggering detection
-if(isNil "bdetect_bullet_min_distance") then { bdetect_bullet_min_distance = 25; }; 							// (Meters, Default 25) Bullets having travelled less than this distance are ignored
+if(isNil "bdetect_bullet_min_distance") then { bdetect_bullet_min_distance = 20; }; 							// (Meters, Default 25) Bullets having travelled less than this distance are ignored
 if(isNil "bdetect_bullet_max_distance") then { bdetect_bullet_max_distance = 500; }; 							// (Meters, Default 500) Bullets havin travelled more than distance are ignored
 if(isNil "bdetect_bullet_max_lifespan") then { bdetect_bullet_max_lifespan = 0.7; }; 							// (Seconds, Default 0.7) Bullets living more than these seconds are ignored
 if(isNil "bdetect_bullet_max_height") then { bdetect_bullet_max_height = 8; }; 									// (Meters, Default 8)  Bullets going higher than this -and- diverging from ground are ignored
@@ -86,33 +85,30 @@ bdetect_fnc_per_frame_emulation =
 bdetect_fnc_init = 
 {
     private [ "_msg", "_nul" ];
-
-    if( bdetect_debug_enable ) then {
-        _msg = format["bdetect_fnc_init() - %1 v%2 is starting ...", bdetect_name_short, bdetect_version];
-        [ _msg, 0 ] call bdetect_fnc_debug;
-    };
-
-    // bullet speed converted to kmh
-    bdetect_bullet_initial_min_speed = bdetect_bullet_initial_min_speed * 3.6;
-    
-    // compile callback name into function
-    bdetect_callback_compiled = call compile format["%1", bdetect_callback];
-
-    // Add per-frame execution of time-critical function
-    if( bdetect_mp_enable && bdetect_mp_per_frame_emulation ) then {  // emulated, per-timeout (MP)	
-        _nul = [] spawn bdetect_fnc_per_frame_emulation;
-    } else { // native per-frame (SP)
-        [bdetect_fnc_detect,0] call cba_fnc_addPerFrameHandler;   
-    };
 	
-    // Assign event handlers to any units (even spawned ones)
-    bdetect_spawned_loop_handler = [] spawn bdetect_fnc_eh_loop;   
+	if( bdetect_debug_enable ) then {
+		_msg = format["%1 v%2 is starting ...", bdetect_name_short, bdetect_version];
+		[ _msg, 0 ] call bdetect_fnc_debug;
+	};
+
+	// bullet speed converted to kmh
+	bdetect_bullet_initial_min_speed = bdetect_bullet_initial_min_speed * 3.6;
+
+	// Add per-frame execution of time-critical function
+	if( bdetect_mp_enable && bdetect_mp_per_frame_emulation ) then {  // emulated, per-timeout (MP)	
+		_nul = [] spawn bdetect_fnc_per_frame_emulation;
+	} else { // native per-frame (SP)
+		[bdetect_fnc_detect,0] call cba_fnc_addPerFrameHandler;   
+	};
+	
+	// Assign event handlers to any units (even spawned ones)
+	bdetect_spawned_loop_handler = [] spawn bdetect_fnc_eh_loop;   
 };
 
 // Keep searching units for newly spawned ones and assign fired EH to them
 bdetect_fnc_eh_loop =
 {
-    private [ "_x", "_msg"];
+	private [ "_x", "_msg"];
 
 	while { true } do // iteratively add EH to all units spawned at runtime
 	{
@@ -120,12 +116,12 @@ bdetect_fnc_eh_loop =
 		{ [_x] call bdetect_fnc_eh_add; } foreach allUnits;	// Loop onto all units
 		/* MP - END */
 			
-		if( !bdetect_init_done ) then 
+		if( isNil "bdetect_init_done" ) then 
 		{ 
 			bdetect_init_done = true; 
 			
 			if( bdetect_debug_enable ) then {
-				_msg = format["bdetect_fnc_eh_loop() - %1 v%2 has started", bdetect_name_short, bdetect_version];
+				_msg = format["%1 v%2 has started", bdetect_name_short, bdetect_version];
 				[ _msg, 0 ] call bdetect_fnc_debug;
 			};
 			
@@ -155,7 +151,7 @@ bdetect_fnc_eh_add =
         
         _e = _unit addEventHandler ["Killed", bdetect_fnc_killed];
         _unit setVariable ["bdetect_killed_eh", _e]; 
-     
+     		
         bdetect_units_count = bdetect_units_count + 1;
         
 		if( bdetect_debug_enable ) then {
@@ -170,9 +166,10 @@ bdetect_fnc_eh_add =
 		&& isNil { _vehicle getVariable "bdetect_fired_eh" } 
 		&& ( assignedVehicleRole _unit) select 0 == "Turret" ) then {  
 		
-		_vehicle addEventHandler ["Fired", bdetect_fnc_fired];  
+		_e = _vehicle addEventHandler ["Fired", bdetect_fnc_fired];  
 		_vehicle setVariable ["bdetect_fired_eh", _e]; 
-		_vehicle addEventHandler ["Killed", bdetect_fnc_killed];        
+		
+		_e = _vehicle addEventHandler ["Killed", bdetect_fnc_killed];        
 		_vehicle setVariable ["bdetect_killed_eh", _e]; 
 
 		bdetect_units_count = bdetect_units_count + 1;            
@@ -187,10 +184,11 @@ bdetect_fnc_eh_add =
 // Killed EH payload
 bdetect_fnc_killed =
 {
-	private ["_unit", "_e", "_msg"];
+	private ["_unit", "_killer", "_e", "_msg"];
 	
 	_unit = _this select 0;
-	
+	_killer = _this select 1;
+		
 	// Remove FIRED EH
 	if( !isNil{ _unit getVariable "bdetect_fired_eh" } ) then
 	{
@@ -207,8 +205,9 @@ bdetect_fnc_killed =
 	// Remove (local) KILLED EH
 	if( !isNil{ _unit getVariable "bdetect_killed_eh" } ) then
 	{
-		_e = _unit getVariable "bdetect_killed_eh";
-		_unit removeEventHandler ["killed", _e];
+		//_e = _unit getVariable "bdetect_killed_eh";
+		//_unit removeEventHandler ["Killed", _e];// bug: in ArmA2 1.61  beta removing this cause all others killed EH to be removed?
+		
 		_unit setVariable ["bdetect_killed_eh", nil];
 
 		if( bdetect_debug_enable ) then {
@@ -218,17 +217,21 @@ bdetect_fnc_killed =
 	};
 	
 	bdetect_units_count_killed = bdetect_units_count_killed + 1;
+	
 };
 
 // Fired EH payload
 bdetect_fnc_fired =
 {
- 	private ["_unit", "_muzzle", "_magazine", "_bullet", "_speed", "_msg", "_time", "_dt"];
+ 	private ["_unit", "_weapon", "_muzzle", "_magazine", "_bullet", "_speed", "_msg", "_time", "_dt"];
 
 	if( bdetect_enable ) then
 	{
 		_unit = _this select 0;
+		_weapon = _this select 1;
 		_muzzle = _this select 2;
+		_mode = _this select 3;
+		_ammo = _this select 4;
 		_magazine = _this select 5;
 		_bullet = _this select 6;
 		_speed = speed _bullet;
@@ -249,14 +252,14 @@ bdetect_fnc_fired =
 			bdetect_fired_bullets_count_tracked = bdetect_fired_bullets_count_tracked + 1;
 			
 			if( bdetect_debug_enable ) then {
-				_msg = format["bdetect_fnc_fired() - Tracking: bullet=%1, unit=%2, speed=%3, type=%4, _dt=%5", _bullet, _unit, _speed, typeOf _bullet, _dt ];
+				_msg = format["bdetect_fnc_fired() - Tracking: bullet=%1, shooter=%2, speed=%3, type=%4, _dt=%5", _bullet, _unit, _speed, typeOf _bullet, _dt ];
 				[ _msg, 2 ] call bdetect_fnc_debug;
 			};
 		}
 		else
 		{
 			if( bdetect_debug_enable ) then {
-				_msg = format["bdetect_fnc_fired() - Skipping: bullet=%1, unit=%2, speed=%3, type=%4, _dt=%5", _bullet, _unit, _speed, typeOf _bullet, _dt ];
+				_msg = format["bdetect_fnc_fired() - Skipping: bullet=%1, shooter=%2, speed=%3 [min:%8], type=%4, _dt=%5 [min:%6 max:%7]", _bullet, _unit, _speed, typeOf _bullet, _dt, bdetect_bullet_min_delay, bdetect_bullet_max_delay, bdetect_bullet_initial_min_speed];
 				[ _msg, 2 ] call bdetect_fnc_debug;
 			};
 		};
@@ -357,6 +360,9 @@ bdetect_fnc_detect_sub =
 								
 								bdetect_fired_bullets_count_detected = bdetect_fired_bullets_count_detected + 1;
 										
+								// compile callback name into function
+								bdetect_callback_compiled = call compile format["%1", bdetect_callback];
+	
 								/* MP - BEGIN */
 								if( bdetect_callback_mode == "spawn" ) then {
 										_nul = [ _x, _shooter, _bullet, _bpos, _pos, _time ] spawn bdetect_callback_compiled;
@@ -585,8 +591,8 @@ my_function = {
 	_shooter = _this select 1;	// shooter
 	_bullet = _this select 2;	// bullet object
 	_bpos = _this select 3;	// bullet position
-	_pos = _data select 4;	// starting position of bullet
-	_time = _data select 5; // starting time of bullet
+	_pos = _this select 4;	// starting position of bullet
+	_time = _this select 5; // starting time of bullet
 	_proximity = _bpos distance _unit;	// distance between _bullet and _unit
 
 	_msg = format["my_function() - [%1] close to bullet %2 fired by %3, proximity=%4m, data=%5", _unit, _bullet, _shooter, _proximity, _data];
@@ -598,7 +604,7 @@ sleep 5; // wait some seconds if you want to load other scripts
 call bdetect_fnc_init;
 
 // Wait for framework to be fully loaded
-waitUntil { bdetect_init_done};
+waitUntil { !(isNil "bdetect_init_done") };
 
 // You are done. Optional: care to activate display of some runtime stats ?
 sleep 5;	// wait some more seconds for CPU load to normalize
