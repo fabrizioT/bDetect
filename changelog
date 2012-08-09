@@ -3,6 +3,12 @@ bDetect | bullet detection framework - Changelog
 ------------------------------------------------
 
 ------------------
+Version: 0.74 BETA
+------------------
+
+* Vehicle Event handlers fix.
+
+------------------
 Version: 0.73 BETA
 ------------------
 

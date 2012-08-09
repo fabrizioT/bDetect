@@ -1,8 +1,8 @@
 // -------------------------------------------------------------------------------------------
 // bDetect | bullet detection framework
 // -------------------------------------------------------------------------------------------
-// Version: 0.73 BETA
-// Date: 03/08/2012
+// Version: 0.74 BETA
+// Date: 09/08/2012
 // Author: Fabrizio_T, Ollem (MP code)
 // Additional code: TPW
 // File Name: bdetect.sqf
@@ -17,7 +17,7 @@
 
 bdetect_name 		= "bDetect | Bullet Detection Framework"; 
 bdetect_name_short 	= "bDetect"; 
-bdetect_version 	= "0.73 BETA";
+bdetect_version 	= "0.74 BETA";
 	
 // -------------------------------------------------------------------------------------------
 // Global variables
@@ -164,7 +164,7 @@ bdetect_fnc_eh_add =
     if( 
 		!( isNull _vehicle ) 
 		&& isNil { _vehicle getVariable "bdetect_fired_eh" } 
-		&& ( assignedVehicleRole _unit) select 0 == "Turret" ) then {  
+	) then {  
 		
 		_e = _vehicle addEventHandler ["Fired", bdetect_fnc_fired];  
 		_vehicle setVariable ["bdetect_fired_eh", _e]; 
