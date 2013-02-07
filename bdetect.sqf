@@ -1,8 +1,8 @@
 // -------------------------------------------------------------------------------------------
 // bDetect | bullet detection framework
 // -------------------------------------------------------------------------------------------
-// Version: 0.74 BETA
-// Date: 09/08/2012
+// Version: 0.76 BETA
+// Date: 17/11/2012
 // Author: Fabrizio_T, Ollem (MP code)
 // Additional code: TPW
 // File Name: bdetect.sqf
@@ -17,11 +17,13 @@
 
 bdetect_name 		= "bDetect | Bullet Detection Framework"; 
 bdetect_name_short 	= "bDetect"; 
-bdetect_version 	= "0.74 BETA";
+bdetect_version 	= "0.76 BETA";
 	
 // -------------------------------------------------------------------------------------------
 // Global variables
 // -------------------------------------------------------------------------------------------
+
+
 
 // You should set these variables elsewhere, don't edit them here since they're default. 
 // See bottom of this file for framework initialization example.
@@ -33,7 +35,7 @@ if(isNil "bdetect_debug_levels") then { bdetect_debug_levels = [0,1,2,3,4,5,6,7,
 if(isNil "bdetect_callback") then { bdetect_callback = "bdetect_fnc_callback"; }; 								// (String, Default "bdetect_fnc_callback") Name for your own callback function
 if(isNil "bdetect_callback_mode") then { bdetect_callback_mode = "spawn"; }; 									// (String, Default "spawn") Allowed values: "call" or "spawn"
 if(isNil "bdetect_fps_adaptation") then { bdetect_fps_adaptation = true; }; 									// (Boolean, Default true) Whether bDetect should try to keep over "bdetect_fps_min" FPS while degrading quality of detection
-if(isNil "bdetect_fps_min") then { bdetect_fps_min = 20; }; 													// (Number, Default 20) The minimum FPS you wish to keep
+if(isNil "bdetect_fps_min") then { bdetect_fps_min = 15; }; 													// (Number, Default 20) The minimum FPS you wish to keep
 if(isNil "bdetect_fps_calc_each_x_frames") then { bdetect_fps_calc_each_x_frames = 16; }; 						// (Number, Default 16) FPS check is done each "bdetect_fps_min" frames. 1 means each frame.
 if(isNil "bdetect_eh_assign_cycle_wait") then { bdetect_eh_assign_cycle_wait = 10; }; 							// (Seconds, Default 10). Wait duration foreach cyclic execution of bdetect_fnc_eh_loop()
 if(isNil "bdetect_bullet_min_delay") then { bdetect_bullet_min_delay = 0.1; }; 									// (Seconds, Default 0.1) Minimum time between 2 consecutive shots fired by an unit for the last bullet to be tracked. Very low values may cause lag.
@@ -46,12 +48,16 @@ if(isNil "bdetect_bullet_max_lifespan") then { bdetect_bullet_max_lifespan = 0.7
 if(isNil "bdetect_bullet_max_height") then { bdetect_bullet_max_height = 8; }; 									// (Meters, Default 8)  Bullets going higher than this -and- diverging from ground are ignored
 if(isNil "bdetect_bullet_skip_mags") then { bdetect_bullet_skip_mags = []; }; 									// (Array) Skip these bullet types altogether. Example: ["30rnd_9x19_MP5", "30rnd_9x19_MP5SD", "15Rnd_9x19_M9"]
 if(isNil "bdetect_mp_enable") then { bdetect_mp_enable = true; }; 												// (Boolean, Default true) Toggle to Enable / Disable MP experimental support
+if(isNil "bdetect_mp_per_frame_native_163beta") then { bdetect_mp_per_frame_native_163beta = false; }; 			// (Boolean, Default true) Pre-frame Detection using "onEachFrame" scripting command, avalilable since ArmA 2 OA 1.62.98866
 if(isNil "bdetect_mp_per_frame_emulation") then { bdetect_mp_per_frame_emulation = false; }; 					// (Boolean, Default false) Toggle to Enable / Disable experimental server per-frame-execution emulation
 if(isNil "bdetect_mp_per_frame_emulation_frame_d") then { bdetect_mp_per_frame_emulation_frame_d = 0.02; };  	// (Seconds, Default 0.02) Experimental server per-frame-execution emulation timeout
+if(isNil "bdetect_units_kindof") then { bdetect_units_kindof = ["Man"]; }; 						// CfgVehicles classes being subject to suppression effects, example: ["Man","StaticWeapon","Car","Tank","Air"]
 
-// NEVER edit the variables below, please.
+// Please NEVER edit the variables below.
 if(isNil "bdetect_fired_bullets") then { bdetect_fired_bullets = []; };
 if(isNil "bdetect_fired_bullets_count") then { bdetect_fired_bullets_count = 0; };
+if(isNil "bdetect_fired_bullets_count_west") then { bdetect_fired_bullets_count_west = 0; };
+if(isNil "bdetect_fired_bullets_count_east") then { bdetect_fired_bullets_count_east = 0; };
 if(isNil "bdetect_fired_bullets_count_tracked") then { bdetect_fired_bullets_count_tracked = 0; };
 if(isNil "bdetect_fired_bullets_count_detected") then { bdetect_fired_bullets_count_detected = 0; };
 if(isNil "bdetect_fired_bullets_count_blacklisted") then { bdetect_fired_bullets_count_blacklisted = 0; };	
@@ -60,7 +66,7 @@ if(isNil "bdetect_units_count_killed") then { bdetect_units_count_killed = 0; };
 if(isNil "bdetect_fps") then { bdetect_fps = bdetect_fps_min; };
 if(isNil "bdetect_bullet_delay") then { bdetect_bullet_delay = bdetect_bullet_min_delay; };
 if(isNil "bdetect_frame_tstamp") then { bdetect_frame_tstamp = 0; };
-if(isNil "bdetect_frame_min_duration") then { bdetect_frame_min_duration = (bdetect_bullet_max_proximity * 2 * .66 / 600) max .01; };
+if(isNil "bdetect_frame_min_duration") then { bdetect_frame_min_duration = 0.015; };	// 60fps
 
 // -------------------------------------------------------------------------------------------
 // Functions
@@ -85,7 +91,7 @@ bdetect_fnc_per_frame_emulation =
 bdetect_fnc_init = 
 {
     private [ "_msg", "_nul" ];
-	
+
 	if( bdetect_debug_enable ) then {
 		_msg = format["%1 v%2 is starting ...", bdetect_name_short, bdetect_version];
 		[ _msg, 0 ] call bdetect_fnc_debug;
@@ -97,8 +103,18 @@ bdetect_fnc_init =
 	// Add per-frame execution of time-critical function
 	if( bdetect_mp_enable && bdetect_mp_per_frame_emulation ) then {  // emulated, per-timeout (MP)	
 		_nul = [] spawn bdetect_fnc_per_frame_emulation;
-	} else { // native per-frame (SP)
-		[bdetect_fnc_detect,0] call cba_fnc_addPerFrameHandler;   
+	} 
+	else 
+	{ 
+		// native per-frame (SP)
+		if(bdetect_mp_per_frame_native_163beta) then
+		{
+			onEachFrame { call bdetect_fnc_detect; };
+		}
+		else
+		{
+			[bdetect_fnc_detect,0] call cba_fnc_addPerFrameHandler;   
+		};
 	};
 	
 	// Assign event handlers to any units (even spawned ones)
@@ -112,9 +128,7 @@ bdetect_fnc_eh_loop =
 
 	while { true } do // iteratively add EH to all units spawned at runtime
 	{
-		/* MP - BEGIN */
 		{ [_x] call bdetect_fnc_eh_add; } foreach allUnits;	// Loop onto all units
-		/* MP - END */
 			
 		if( isNil "bdetect_init_done" ) then 
 		{ 
@@ -217,7 +231,6 @@ bdetect_fnc_killed =
 	};
 	
 	bdetect_units_count_killed = bdetect_units_count_killed + 1;
-	
 };
 
 // Fired EH payload
@@ -239,6 +252,12 @@ bdetect_fnc_fired =
 		_dt = _time - ( _unit getVariable ["bdetect_fired_time", 0] );
 		
 		bdetect_fired_bullets_count = bdetect_fired_bullets_count + 1;
+		
+		if(side _unit == WEST) then {
+			bdetect_fired_bullets_count_west = bdetect_fired_bullets_count_west + 1;
+		} else {
+			bdetect_fired_bullets_count_east = bdetect_fired_bullets_count_east + 1;
+		};
 		
 		if( _dt > bdetect_bullet_delay 
 		&& !( _magazine in bdetect_bullet_skip_mags ) 
@@ -277,7 +296,7 @@ bdetect_fnc_detect =
 		
 		_t = time; //diag_tickTime
 		_dt = _t - bdetect_frame_tstamp;
-		
+
 		if( _dt >= bdetect_frame_min_duration ) then
 		{
 			bdetect_frame_tstamp = _t;
@@ -346,44 +365,39 @@ bdetect_fnc_detect_sub =
 		{
 			if( _dist > bdetect_bullet_min_distance	) then {
 			
-				_units = _bpos nearEntities [ ["MAN"] , bdetect_bullet_max_proximity];
-	
+				_units = _bpos nearEntities [ bdetect_units_kindof, bdetect_bullet_max_proximity];
+
 				{
-					if( _x != _shooter ) then {
-					
-						if( !(_x in _blacklist)  ) then {
-					
-							if( vehicle _x == _x && lifestate _x == "ALIVE" && local _x ) then {
-							
-								_blacklist set [ count _blacklist, _x];
-								_update_blacklist = true;
-								
-								bdetect_fired_bullets_count_detected = bdetect_fired_bullets_count_detected + 1;
-										
-								// compile callback name into function
-								bdetect_callback_compiled = call compile format["%1", bdetect_callback];
-	
-								/* MP - BEGIN */
-								if( bdetect_callback_mode == "spawn" ) then {
-										_nul = [ _x, _shooter, _bullet, _bpos, _pos, _time ] spawn bdetect_callback_compiled;
-								} else {
-										[ _x, _shooter, _bullet, _bpos, _pos, _time ] call bdetect_callback_compiled;
-								};
-								/* MP - END */
-								
-								if( bdetect_debug_enable ) then {
-									_msg = format["bdetect_fnc_detect_sub() - *** CLOSE BULLET ***: unit=%1, bullet=%2, shooter=%3, proximity=%4, data=%5", _x, _bullet, _shooter, round (_x distance _bpos), _data];
-									[ _msg, 9 ] call bdetect_fnc_debug;
-								};
-							};
-						}
-						else
+					if( _x != _shooter && local _x && lifestate _x == "ALIVE" ) then
+					{
+						if( _x in _blacklist ) then 
 						{
 							bdetect_fired_bullets_count_blacklisted = bdetect_fired_bullets_count_blacklisted + 1;
 							
 							if( bdetect_debug_enable ) then {
 								_msg = format["bdetect_fnc_detect_sub() - blacklisted: bullet=%1, unit=%2, shooter=%3", _bullet, _x, _shooter];
 								[ _msg, 5 ] call bdetect_fnc_debug;
+							};
+						}
+						else
+						{
+							_blacklist set [ count _blacklist, _x];
+							_update_blacklist = true;
+							
+							bdetect_fired_bullets_count_detected = bdetect_fired_bullets_count_detected + 1;
+									
+							// compile callback name into function
+							bdetect_callback_compiled = call compile format["%1", bdetect_callback];
+
+							if( bdetect_callback_mode == "spawn" ) then {
+								_nul = [ _x, _shooter, _bullet, _bpos, _pos, _time ] spawn bdetect_callback_compiled;
+							} else {
+								[ _x, _shooter, _bullet, _bpos, _pos, _time ] call bdetect_callback_compiled;
+							};
+							
+							if( bdetect_debug_enable ) then {
+								_msg = format["bdetect_fnc_detect_sub() - *** CLOSE BULLET ***: unit=%1, bullet=%2, shooter=%3, proximity=%4, data=%5", _x, _bullet, _shooter, round (_x distance _bpos), _data];
+								[ _msg, 9 ] call bdetect_fnc_debug;
 							};
 						};
 					};
@@ -535,13 +549,15 @@ bdetect_fnc_benchmark =
 	
 	_nul = [] spawn 
 	{
+		sleep 5;
+		
 		while { true } do
 		{
 			_cnt = count ( bdetect_fired_bullets ) / 2;
 			if( _cnt > bdetect_stats_max_bullets ) then { bdetect_stats_max_bullets = _cnt; };
 			
 			if( diag_fps < bdetect_stats_min_fps ) then { bdetect_stats_min_fps = diag_fps };
-			hintsilent format["TIME: %1\nFPS: %2 (min: %3)\nBULLETS: %4 (max: %5)\nS.DELAY: %6 (Min FPS: %7)\nFIRED: %8\nTRACKED: %9\nDETECTED: %10\nBLACKLISTED: %11\nUNITS: %12\nKILLED: %13", 
+			hintsilent format["TIME: %1\nFPS: %2 (min: %3)\nBULLETS: %4 (max: %5)\nS.DELAY: %6 (Min FPS: %7)\nFIRED: %8 (W%9 E%10)\nTRACKED: %11\nDETECTED: %12\nBLACKLISTED: %13\nUNITS: %14\nKILLED: %15", 
 			time, 
 			diag_fps, 
 			bdetect_stats_min_fps, 
@@ -550,6 +566,8 @@ bdetect_fnc_benchmark =
 			bdetect_bullet_delay, 
 			bdetect_fps_min,
 			bdetect_fired_bullets_count,
+			bdetect_fired_bullets_count_west,
+			bdetect_fired_bullets_count_east,
 			bdetect_fired_bullets_count_tracked,
 			bdetect_fired_bullets_count_detected,
 			bdetect_fired_bullets_count_blacklisted,
